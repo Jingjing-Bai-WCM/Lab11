@@ -1,0 +1,96 @@
+---
+title: "Lab11"
+author: "J Bai"
+date: "11/21/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(microbenchmark)
+library(profvis)
+```
+
+# Activity - Lab 11
+### 1. Write a function that generates numbers from binomial(n, p) distribution using runif() function. 
+Hint: binomial(n, p) random variable can be defined as a sum of n independent Bernoulli(p) random variables.
+```{r}
+# my_rbinom <- function(n, p) {
+#   bernoulli.result <- replicate(n, {
+#     runif(1) <= p
+#   })
+#   return(sum(bernoulli.result))
+# }
+
+my_rbinom <- function(n, p) {
+  bernoulli.result <- 0
+  for(i in 1:n) {
+    bernoulli.result = bernoulli.result + (runif(1) <= p)
+  }
+  return(bernoulli.result)
+}
+
+set.seed(1)
+rbinom(1, 1000, 0.7)
+my_rbinom(1000, 0.7)
+```
+
+### 2. Compare performance of your function with rbinom() using microbenchmark() function.
+```{r}
+microbenchmark(rbinom(1, 1000, 0.7), my_rbinom(1000, 0.7))
+```
+
+
+
+### 3. Suppose we want to simulate data from a linear regression model: 
+$Y_i = \beta_0 + \beta_1\times x_i+\epsilon_i$, $i=1, ...,N$, where $\epsilon$ ~ $N(0,3)$ and X is a covariate that ranges between 20 and 40. Let $\beta_0$ = 15 and $\beta_1$ = 0.4 are known coefficients. Generate data (N = 50) from this models with given coefficients. Fit a linear regression model and plot fitted values vs residuals using ggplot() function. Please do not forget to use set.seed() function for reproducibility.
+```{r}
+n <- 50
+fit.function <- function(x, beta0=15, beta1=0.4) {
+  return(beta0 + beta1*x)
+}
+set.seed(1)
+xs <- sample(20:40, size=n, replace = TRUE)
+ys <- sapply(xs, fit.function)
+fit <- lm(ys ~ xs)
+
+dat <- data.frame(xs, ys)
+dat$fitted.v <- predict(fit) 
+dat$residuals.v <- residuals(fit)
+
+ggplot(dat, aes(x=fitted.v, y=residuals.v)) +
+  geom_point()
+```
+
+### 4. 
+Box-Muller algorithm: generate $U_1$ and $U_2$ two independent uniform(0, 1) random variables and set: $R = -2log(U_1)$ and $\theta = 2\pi U_2$ then $X = R$cos($\theta$) and $Y = R$sin($\theta$) are two independent normal variables. Write a function that generates normal variates using Box-Muller algorithm. Compare simulated data from your function with simulated data from rnorm() function using ggplot() (histogram?).
+```{r}
+box_muller <- function() {
+  u1 <- runif(1)
+  u2 <- runif(1)
+  R <- sqrt(-2*log10(u1))
+  theta <- 2*pi*u2
+  x <- R * cos(theta)
+  y <- R * sin(theta)
+  return(c(x,y))
+}
+
+ys.norm <- rnorm(1000)
+box_muller.result <- replicate(1000, box_muller())
+xs.box_muller <- box_muller.result[1,]
+ys.box_muller <- box_muller.result[2,]
+
+ggplot() +
+  geom_histogram(aes(x=ys.norm, fill = "a"), color = 2, alpha=0.3) +
+  geom_histogram(aes(x=xs.box_muller, fill = "b"), color = 3, alpha=0.3) +
+  geom_histogram(aes(x=ys.box_muller, fill = "c"), color = 4, alpha=0.3) +
+  scale_fill_manual(values = c(a=2, b=3,c=4),
+                    label = c("From rnorm", "From box muller x", "From box muller y"))
+```
+
+
+

@@ -51,7 +51,7 @@ $Y_i = \beta_0 + \beta_1\times x_i+\epsilon_i$, $i=1, ...,N$, where $\epsilon$ ~
 ```{r}
 n <- 50
 fit.function <- function(x, beta0=15, beta1=0.4) {
-  return(beta0 + beta1*x)
+  return(beta0 + beta1*x + rnorm(1, 0, 3))
 }
 set.seed(1)
 xs <- sample(20:40, size=n, replace = TRUE)
@@ -59,11 +59,10 @@ ys <- sapply(xs, fit.function)
 fit <- lm(ys ~ xs)
 
 dat <- data.frame(xs, ys)
-dat$fitted.v <- predict(fit) 
-dat$residuals.v <- residuals(fit)
 
-ggplot(dat, aes(x=fitted.v, y=residuals.v)) +
-  geom_point()
+ggplot(dat, aes(x=xs, y=ys)) +
+  geom_point() +
+  geom_smooth(method='lm')
 ```
 
 ### 4. 
@@ -91,6 +90,8 @@ ggplot() +
   scale_fill_manual(values = c(a=2, b=3,c=4),
                     label = c("From rnorm", "From box muller x", "From box muller y"))
 ```
+
+
 
 
 
